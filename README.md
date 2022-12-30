@@ -1,5 +1,6 @@
-# BrookstoneBedwarmer
-This was a project to replace a flaky controller for a Brookstone Bedwarmer / Heated Mattress Pad.
+# Brookstone Bedwarmer / Heated Mattress Pad Controller.
+
+This was a project to replace a flaky controller for a Brookstone Bedwarmer / Heated Mattress Pad, purchased at Bed Bath and Beyond. The heated mattress pad worked well in the beginning in the US, but after moving to Japan it became very flaky (most likely not liking 100V/50Hz instead 0f 110V/60Hz).
 
 I used ESP32 board with 0.96" OLED SSD1306 type display, set of two solid state relays (for contorlling the A/C power) and a small 5V PSU board and a 2A fuse with a housing. Below are links to the products on Japanese Amazon site (I'm sure similar/comparable products exist on Amazon in any locality they serve or any electronics parts store).
 - ESP32 DevKit boards: https://amzn.asia/d/9b7Ar7T
