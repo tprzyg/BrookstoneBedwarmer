@@ -32,11 +32,14 @@
 
 #define MIN_TEMP 1
 #define MAX_TEMP 10
+#define TEMP_STEP 1
 #define DEFAULT_TEMP 2
 #define MIN_DUTY_CYCLE 0.1
 #define MAX_DUTY_CYCLE 0.8
 #define HEATER_TIME_UNIT 1000
 
+#define MIN_TIMER 10
+#define MAX_TIMER 720
 #define TIMER_STEP 10
 #define DEFAULT_TIMER 180
 
@@ -67,30 +70,26 @@ int enterSleepMode;
 
 int heatSetting;
 int timerRemaining;
-int tempUpPressed;
-int tempDownPressed;
-int timerUpPressed;
-int timerDownPressed;
-int powerOnPressed;
 int lastButtonPressed;
 
-unsigned long currentPressTime;
+unsigned long currentTime;
+unsigned long lastDisplayOn;
+unsigned long lastPressTime;
 unsigned long timerStartTime;
 unsigned long lastUpdateTime;
 unsigned long lastHeatOnTime;
 unsigned long lastHeatOffTime;
-unsigned long lastDisplayOn;
-unsigned long lastPressTime;
+unsigned long currentPressTime;
 
 void IRAM_ATTR temp_up() {
   currentPressTime = millis();
   if (currentPressTime - lastPressTime > DEBOUNCING_TIME) {
+    displayUpdate = true;
     lastPressTime = currentPressTime;
     lastButtonPressed = TEMP_PLUS_PIN;
-    displayUpdate = true;
     if (displayOn == true) {
-      if (heatSetting < MAX_TEMP) {
-        heatSetting++;
+      if (heatSetting < MAX_TEMP - HEAT_STEP) {
+        heatSetting = heatSetting + HEAT_STEP;
       }
     } else {
       displayOn = true;
@@ -106,8 +105,8 @@ void IRAM_ATTR temp_down() {
     lastPressTime = currentPressTime;
     lastButtonPressed = TEMP_MINUS_PIN;
     if (displayOn == true) {
-      if (heatSetting > MIN_TEMP) {
-        heatSetting--;
+      if (heatSetting > MIN_TEMP + HEAT_STEP) {
+        heatSetting = heatSetting - HEAT_STEP;
       }
     } else {
       displayOn = true;
@@ -123,7 +122,7 @@ void IRAM_ATTR timer_up() {
     lastPressTime = currentPressTime;
     lastButtonPressed = TIMER_PLUS_PIN;
     if (displayOn == true) {
-      if ((timerRemaining > 0) and (timerRemaining < (720 - TIMER_STEP)) {
+      if ((timerRemaining > 0) and (timerRemaining < MAX_TIMER - TIMER_STEP)) {
         timerRemaining = timerRemainig + TIMER_STEP;
       }
     } else {
@@ -140,7 +139,7 @@ void IRAM_ATTR timer_down() {
     lastPressTime = currentPressTime;
     lastButtonPressed = TIMER_MINUS_PIN;
     if (displayOn == true) {
-      if ((timerRemainig > TIMER_STEP) {
+      if (timerRemainig > MIN_TIMER + TIMER_STEP) {
         timerRemaining = timerRemaining - TIMER_STEP;
       }
     } else {
@@ -209,7 +208,7 @@ void updateDisplay(int myHeat, int myTime) {
 }
 
 void runHeater(int myHeat) {
-  unsigned long currentTime = millis();
+  currentTime = millis();
   unsigned long dutyOnTime = round(HEATER_TIME_UNIT * (myHeat * 0.1 * (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE) + MIN_DUTY_CYCLE));
   unsigned long dutyOffTime = HEATER_TIME_UNIT - dutyOnTime;
   if (timerRemaining > 0) and ((heatSetting >= MIN_TEMP and (heatSetting <= MAX_TEMP)) {
@@ -279,15 +278,16 @@ void setup() {
   display.setRotation(3);
   display.ssd1306_command(SSD1306_DISPLAYON);
   Serial.println("Bedwarmer Controller Mockup");
-  heatSetting = DEFAULT_TEMP;
-  timerSetting = DEFAULT_TIMER;
-  lastPressTime = millis();
-  timerStartTime = millis();
-  lastDisplayOn = millis();
-  enterSleepMode = false;
   displayOn = true;
   heaterOn = false;
   displayUpdate = true;
+  enterSleepMode = false;
+  currentTime = millis();
+  lastPressTime = currentTime;
+  timerStartTime = currentTime;
+  lastDisplayOn = currentTime;
+  heatSetting = DEFAULT_TEMP;
+  timerRemaining = DEFAULT_TIMER;
   pinMode(TEMP_UP_PIN, INPUT_PULLUP);
   pinMode(TEMP_DOWN_PIN, INPUT_PULLUP);
   pinMode(TIMER_UP_PIN, INPUT_PULLUP);
@@ -303,11 +303,14 @@ void setup() {
 }
 
 void loop() {
+  unsigned long currentTime = millis();
   if (enterSleepMode == true) {
     deepSleepMode();
   }
+  if (timerRemamining > 0) {
+  
+  }
   runHeater(heatSetting);
-  unsigned long currentTime = millis();
   if (displayOn == true) {
     if (currentTime - lastUpdateTime >= 10000) {
       displayUpdate = true;
@@ -315,9 +318,7 @@ void loop() {
     }
   }
   if (displayUpdate == true) {
-    unsigned long timerMillis = timerSetting * 60000;
-    unsigned long remainingMinutes = round((timerStartTime + timerMillis - currentTime) / 60000);
-    updateDisplay(heatSetting, remainingMinutes);
+    updateDisplay(heatSetting, timerRemaining);
     if (remainingMinutes <= 0) {
       enterSleepMode = true;
     }
