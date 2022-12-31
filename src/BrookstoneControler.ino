@@ -313,6 +313,7 @@ void setup() {
   lastDisplayOn = currentTime;
   timerStartTime = currentTime;
   timerRemaining = DEFAULT_TIMER;
+  timerEndTime = timerStartTime + DEFAULT_TIMER * 60000;
   lastButtonPressTime = currentTime;
   // pinMode(POWER_ON_PIN, INPUT_PULLUP);
   // pinMode(TEMP_PLUS_PIN, INPUT_PULLUP);
