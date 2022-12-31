@@ -218,6 +218,7 @@ void updateDisplay() {
       display.println(timeStr);
       display.display();
     }
+    refreshDisplay = false;
     // DEBUG
     Serial.print("currentTime = ");
     Serial.print(currentTime);
@@ -233,6 +234,7 @@ void updateDisplay() {
 void checkTimerOff() {
   currentTime = millis();
   long timerRemainingMillis = timerEndTime - currentTime;
+  timerRemaining = round(timerRemainingMillis / 60000);
   if (timerRemaining <= 0) {
     timerRemaining = 0;
     timerOn = false;
