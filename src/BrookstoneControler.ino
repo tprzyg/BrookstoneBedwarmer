@@ -67,7 +67,7 @@ void IRAM_ATTR temp_up_ISR() {
     lastButtonPressed = TEMP_PLUS_PIN;
     lastButtonPressTime = currentPressTime;
     if (displayOn == true) {
-      if (heatSetting < MAX_TEMP - TEMP_STEP) {
+      if (heatSetting <= MAX_TEMP - TEMP_STEP) {
         heatSetting = heatSetting + TEMP_STEP;
       }
     } else {
@@ -85,7 +85,7 @@ void IRAM_ATTR temp_down_ISR() {
     lastButtonPressed = TEMP_MINUS_PIN;
     lastButtonPressTime = currentPressTime;
     if (displayOn == true) {
-      if (heatSetting > MIN_TEMP + TEMP_STEP) {
+      if (heatSetting >= MIN_TEMP + TEMP_STEP) {
         heatSetting = heatSetting - TEMP_STEP;
       }
     } else {
@@ -179,10 +179,10 @@ void updateDisplay() {
   if (displayOn == true) {
     if (currentTime - lastDisplayUpdateTime >= DISPLAY_REFRESH_RATE) {
       refreshDisplay = true;
-      lastDisplayUpdateTime = currentTime;
     }
   }
   if (refreshDisplay == true) {
+    lastDisplayUpdateTime = currentTime;
     int timerHours = timerRemaining / 60;
     int timerMinutes = timerRemaining - timerHours * 60;
     char heatStr[8];
