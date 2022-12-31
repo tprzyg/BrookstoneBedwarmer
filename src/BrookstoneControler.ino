@@ -264,7 +264,6 @@ void runHeater() {
           heaterOn = true;
           lastHeatOnTime = currentTime;
         }
-        //    } else if (heaterOn == true) {
       } else {
         if (currentTime - lastHeatOnTime >= dutyOnTime) {
           // TURN THE HEAT OFF
@@ -309,7 +308,6 @@ void setup() {
   digitalWrite(HEATER_RELAY_PIN, LOW);
   displayOn = true;
   refreshDisplay = true;
-  // heaterOn = false;
   enterSleepMode = false;
   heatSetting = DEFAULT_TEMP;
   lastDisplayOn = currentTime;
@@ -317,16 +315,6 @@ void setup() {
   timerRemaining = DEFAULT_TIMER;
   timerEndTime = timerStartTime + DEFAULT_TIMER * 60000;
   lastButtonPressTime = currentTime;
-  // pinMode(POWER_ON_PIN, INPUT_PULLUP);
-  // pinMode(TEMP_PLUS_PIN, INPUT_PULLUP);
-  // pinMode(TEMP_MINUS_PIN, INPUT_PULLUP);
-  // pinMode(TIMER_PLUS_PIN, INPUT_PULLUP);
-  // pinMode(TIMER_MINUS_PIN, INPUT_PULLUP);
-  // attachInterrupt(POWER_ON_PIN, power_button_ISR, FALLING);
-  // attachInterrupt(TEMP_PLUS_PIN, temp_up_ISR, FALLING);
-  // attachInterrupt(TEMP_MINUS_PIN, temp_down_ISR, FALLING);
-  // attachInterrupt(TIMER_PLUS_PIN, timer_up_ISR, FALLING);
-  // attachInterrupt(TIMER_MINUS_PIN, timer_down_ISR, FALLING);
   setup_pin(POWER_ON_PIN, power_button_ISR);
   setup_pin(TEMP_PLUS_PIN, temp_up_ISR);
   setup_pin(TEMP_MINUS_PIN, temp_down_ISR);
