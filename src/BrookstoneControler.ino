@@ -37,29 +37,28 @@
 #define MAX_DUTY_CYCLE 0.8
 #define HEATER_TIME_UNIT 1000
 
-#define MIN_TIMER 30
-#define MAX_TIMER 750
 #define TIMER_STEP 10
 #define DEFAULT_TIMER 180
 
 #define DEBOUNCING_TIME 250
 
-#define TEMP_UP_PIN 13
-#define TEMP_DOWN_PIN 12
-
-#define TIMER_UP_PIN 14
-#define TIMER_DOWN_PIN 27
-
-#define POWER_ON_PIN 26
-#define WAKEUP_PIN GPIO_NUM_26
-
+// Define PINs for buttons, 
+#define TEMP_PLUS_PIN GPIO_NUM_13
+#define TEMP_MINUS_PIN GPIO_NUM_12
+#define TIMER_PLUS_PIN GPIO_NUM_14
+#define TIMER_MINUS_PIN GPIO_NUM_27
+#define POWER_PIN GPIO_NUM_26
 #define HEATER_RELAY_PIN 23
 
+// Settings for the 0.96" SSD1306 OLED SCREEN
 #define SCREEN_I2C 0x3C
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define DISPLAY_DIMMING 15000
 #define DISPLAY_TIMEOUT 60000
+// Initialize Screen
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 
 int heaterOn;
 int displayOn;
@@ -67,28 +66,27 @@ int displayUpdate;
 int enterSleepMode;
 
 int heatSetting;
-int timerSetting;
+int timerRemaining;
 int tempUpPressed;
 int tempDownPressed;
 int timerUpPressed;
 int timerDownPressed;
+int powerOnPressed;
 int lastButtonPressed;
 
-unsigned long lastPressTime;
 unsigned long currentPressTime;
 unsigned long timerStartTime;
 unsigned long lastUpdateTime;
 unsigned long lastHeatOnTime;
 unsigned long lastHeatOffTime;
 unsigned long lastDisplayOn;
-
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+unsigned long lastPressTime;
 
 void IRAM_ATTR temp_up() {
   currentPressTime = millis();
   if (currentPressTime - lastPressTime > DEBOUNCING_TIME) {
     lastPressTime = currentPressTime;
-    lastButtonPressed = TEMP_UP_PIN;
+    lastButtonPressed = TEMP_PLUS_PIN;
     displayUpdate = true;
     if (displayOn == true) {
       if (heatSetting < MAX_TEMP) {
@@ -106,7 +104,7 @@ void IRAM_ATTR temp_down() {
   if (currentPressTime - lastPressTime > DEBOUNCING_TIME) {
     displayUpdate = true;
     lastPressTime = currentPressTime;
-    lastButtonPressed = TEMP_DOWN_PIN;
+    lastButtonPressed = TEMP_MINUS_PIN;
     if (displayOn == true) {
       if (heatSetting > MIN_TEMP) {
         heatSetting--;
@@ -123,10 +121,10 @@ void IRAM_ATTR timer_up() {
   if (currentPressTime - lastPressTime > DEBOUNCING_TIME) {
     displayUpdate = true;
     lastPressTime = currentPressTime;
-    lastButtonPressed = TIMER_UP_PIN;
+    lastButtonPressed = TIMER_PLUS_PIN;
     if (displayOn == true) {
-      if ((timerSetting + TIMER_STEP) <= MAX_TIMER) {
-        timerSetting = timerSetting + TIMER_STEP;
+      if ((timerRemaining > 0) and (timerRemaining < (720 - TIMER_STEP)) {
+        timerRemaining = timerRemainig + TIMER_STEP;
       }
     } else {
       displayOn = true;
@@ -140,10 +138,10 @@ void IRAM_ATTR timer_down() {
   if (currentPressTime - lastPressTime > DEBOUNCING_TIME) {
     displayUpdate = true;
     lastPressTime = currentPressTime;
-    lastButtonPressed = TIMER_DOWN_PIN;
+    lastButtonPressed = TIMER_MINUS_PIN;
     if (displayOn == true) {
-      if ((timerSetting - TIMER_STEP) >= MIN_TIMER) {
-        timerSetting = timerSetting - TIMER_STEP;
+      if ((timerRemainig > TIMER_STEP) {
+        timerRemaining = timerRemaining - TIMER_STEP;
       }
     } else {
       displayOn = true;
@@ -214,7 +212,7 @@ void runHeater(int myHeat) {
   unsigned long currentTime = millis();
   unsigned long dutyOnTime = round(HEATER_TIME_UNIT * (myHeat * 0.1 * (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE) + MIN_DUTY_CYCLE));
   unsigned long dutyOffTime = HEATER_TIME_UNIT - dutyOnTime;
-  if ((heatSetting > 0) and (heatSetting < 11)) {
+  if (timerRemaining > 0) and ((heatSetting >= MIN_TEMP and (heatSetting <= MAX_TEMP)) {
     if (heaterOn == false) {
       if (currentTime - lastHeatOffTime >= dutyOffTime) {
         // TURN THE HEAT ON
@@ -236,19 +234,19 @@ void runHeater(int myHeat) {
       }
     }
   } else {
-    if (digitalRead(HEATER_RELAY_PIN) == HIGH) {
+    Serial.println("Invalid heat setting... ignoring...");
+ 	  if (digitalRead(HEATER_RELAY_PIN) == HIGH) {
       Serial.print("Turning Heater OFF @ ");
       Serial.println(currentTime);
       digitalWrite(HEATER_RELAY_PIN, LOW);
     }
-    Serial.println("Invalid heat setting... ignoring...");
   }
 }
 
 void deepSleepMode() {
   unsigned long currentTime = millis();
   heatSetting = 0;
-  timerSetting = 0;
+  timerRemaining = 0;
   if (digitalRead(HEATER_RELAY_PIN) == HIGH) {
     Serial.print("Turning Heater OFF @ ");
     Serial.println(currentTime);
