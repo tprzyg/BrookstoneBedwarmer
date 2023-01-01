@@ -54,80 +54,110 @@ unsigned long lastDisplayUpdateTime = 0;
 
 unsigned long currentPressTime = 0;
 unsigned long lastButtonPressTime = 0;
+unsigned long lastButtonActionTime = 0;
 
 unsigned long lastHeatOnTime = 0;
 unsigned long lastHeatOffTime = 0;
 
-typedef void (*ISR_fuction)(void);
+typedef void (*dummyFunction)(void);
+
+struct Button {
+  unsigned int PIN;
+  bool Pressed = false;
+  unsigned long lastPressTime = 0;
+  dummyFunction ISR_routine;
+  dummyFunction Action_routine;
+};
+
+void IRAM_ATTR temp_plus_action(unsigned int myFactor) {
+  currentPressTime = millis();
+  refreshDisplay = true;
+  lastDisplayOn = currentPressTime;
+  if (displayOn == true) {
+    if (heatSetting <= MAX_TEMP - TEMP_STEP) {
+      heatSetting = heatSetting + TEMP_STEP;
+      lastButtonActionTime = currentPressTime;
+    }
+  } else {
+    displayOn = true;
+  }
+}
+
+void IRAM_ATTR temp_minus_action(unsigned int myFactor) {
+  currentPressTime = millis();
+  refreshDisplay = true;
+  lastDisplayOn = currentPressTime;
+  if (displayOn == true) {
+    if (heatSetting >= MIN_TEMP + TEMP_STEP) {
+      heatSetting = heatSetting - TEMP_STEP;
+      lastButtonActionTime = currentPressTime;
+    }
+  } else {
+    displayOn = true;
+  }
+}
+
+void IRAM_ATTR timer_plus_action(unsigned int myFactor) {
+  currentPressTime = millis();
+  refreshDisplay = true;
+  lastDisplayOn = currentPressTime;
+  if (displayOn == true) {
+    if (timerEndTime - currentTime < (MAX_TIMER - TIMER_STEP * myFactor) * 60000) {
+      timerEndTime = timerEndTime + TIMER_STEP * myFactor * 60000;
+      lastButtonActionTime = currentPressTime;
+    }
+  } else {
+    displayOn = true;
+  }
+}
+
+void IRAM_ATTR timer_minus_action(unsigned int myFactor) {
+  currentPressTime = millis();
+  refreshDisplay = true;
+  lastDisplayOn = currentPressTime;
+  if (displayOn == true) {
+    if (timerEndTime - currentTime > (TIMER_STEP * myFactor + 1) * 60000) {
+      timerEndTime = timerEndTime - TIMER_STEP * myFactor * 60000;
+      lastButtonActionTime = currentPressTime;
+    }
+  } else {
+    displayOn = true;
+  }
+}
 
 void IRAM_ATTR temp_up_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    refreshDisplay = true;
     lastButtonPressed = TEMP_PLUS_PIN;
     lastButtonPressTime = currentPressTime;
-    if (displayOn == true) {
-      if (heatSetting <= MAX_TEMP - TEMP_STEP) {
-        heatSetting = heatSetting + TEMP_STEP;
-      }
-    } else {
-      displayOn = true;
-    }
-    lastDisplayOn = currentPressTime;
+    temp_plus_action(1);
   }
 }
 
 void IRAM_ATTR temp_down_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    refreshDisplay = true;
-    lastButtonPressTime = currentPressTime;
     lastButtonPressed = TEMP_MINUS_PIN;
     lastButtonPressTime = currentPressTime;
-    if (displayOn == true) {
-      if (heatSetting >= MIN_TEMP + TEMP_STEP) {
-        heatSetting = heatSetting - TEMP_STEP;
-      }
-    } else {
-      displayOn = true;
-    }
-    lastDisplayOn = currentPressTime;
+    temp_minus_action(1);
   }
 }
 
 void IRAM_ATTR timer_up_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    refreshDisplay = true;
-    lastButtonPressTime = currentPressTime;
     lastButtonPressed = TIMER_PLUS_PIN;
     lastButtonPressTime = currentPressTime;
-    if (displayOn == true) {
-      if (timerEndTime - currentTime < (MAX_TIMER - TIMER_STEP) * 60000) {
-        timerEndTime = timerEndTime + TIMER_STEP * 60000;
-      }
-    } else {
-      displayOn = true;
-    }
-    lastDisplayOn = currentPressTime;
+    timer_plus_action(1);
   }
 }
 
 void IRAM_ATTR timer_down_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    refreshDisplay = true;
-    lastButtonPressTime = currentPressTime;
     lastButtonPressed = TIMER_MINUS_PIN;
     lastButtonPressTime = currentPressTime;
-    if (displayOn == true) {
-      if (timerEndTime - currentTime > (TIMER_STEP + 1) * 60000) {
-        timerEndTime = timerEndTime - TIMER_STEP * 60000;
-      }
-    } else {
-      displayOn = true;
-    }
-    lastDisplayOn = currentPressTime;
+    timer_minus_action(1);
   }
 }
 
@@ -135,8 +165,8 @@ void IRAM_ATTR power_button_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
     refreshDisplay = true;
-    lastButtonPressTime = currentPressTime;
     lastButtonPressed = POWER_ON_PIN;
+    lastButtonPressTime = currentPressTime;
     if (displayOn == true) {
       enterSleepMode = true;
     } else {
@@ -284,7 +314,35 @@ void runHeater() {
   }
 }
 
-void setup_pin(unsigned int PIN, ISR_fuction ISR_routine) {
+void checkButtons() {
+  currentTime = millis();
+  bool buttonAction = false;
+  unsigned int actionFactor = 1;
+  if (digitalRead(lastButtonPressed) == LOW) {
+    if (currentTime - lastButtonPressTime > 9 * LONG_BUTTON_PRESS) {
+      buttonAction = true;
+      actionFactor = 10;
+    } else if (currentTime - lastButtonPressTime > 4 * LONG_BUTTON_PRESS) {
+      buttonAction = true;
+    } else if (currentTime - lastButtonActionTime > LONG_BUTTON_PRESS) {
+      buttonAction = true;
+      lastButtonActionTime = currentTime;
+    }
+  }
+  if (buttonAction == true) {
+    if (lastButtonPressed == TEMP_PLUS_PIN) {
+      temp_plus_action(actionFactor);
+    } else if (lastButtonPressed == TEMP_MINUS_PIN) {
+      temp_minus_action(actionFactor);
+    } else if (lastButtonPressed == TIMER_PLUS_PIN) {
+      timer_plus_action(actionFactor);
+    } else if (lastButtonPressed == TIMER_MINUS_PIN) {
+      timer_minus_action(actionFactor);
+    }
+  }
+}
+
+void setup_pin(unsigned int PIN, dummyFunction ISR_routine) {
   pinMode(PIN, INPUT_PULLUP);
   attachInterrupt(PIN, ISR_routine, FALLING);
 }
@@ -324,6 +382,7 @@ void setup() {
 }
 
 void loop() {
+  checkButtons();
   checkTimerOff();
   checkPowerOff();
   updateDisplay();

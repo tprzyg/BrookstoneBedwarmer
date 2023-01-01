@@ -6,12 +6,13 @@
 #define MAX_DUTY_CYCLE 0.8
 #define HEATER_TIME_CYCLE 1000
 
-#define MIN_TIMER 10
+#define TIMER_STEP 5
+#define MIN_TIMER TIMER_STEP
 #define MAX_TIMER 720
-#define TIMER_STEP 10
 #define DEFAULT_TIMER 180
 
 #define DEBOUNCING_TIME 250
+#define LONG_BUTTON_PRESS 755
 
 // Define PINs for buttons,
 #define TEMP_PLUS_PIN GPIO_NUM_13
