@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+BrookstoneControler/debug.cfg
+BrookstoneControler/debug_custom.json
+*.svd
