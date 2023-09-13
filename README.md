@@ -1,6 +1,6 @@
 # Brookstone Bedwarmer / Heated Mattress Pad Controller.
 
-![alt text](https://github.com/tprzyg/[BrookstoneBedwarmer]/blob/[main]/resources/Bedwarmer_bb.jpg?raw=true)
+![alt text](https://github.com/tprzyg/BrookstoneBedwarmer/blob/main/resources/Bedwarmer_bb.jpg?raw=true)
 
 This was a project to replace a flaky controller for a Brookstone Bedwarmer / Heated Mattress Pad, purchased at Bed Bath and Beyond. The heated mattress pad worked well in the beginning in the US, but after moving to Japan it became very flaky (most likely not liking 100V/50Hz instead of 110V/60Hz).
 
