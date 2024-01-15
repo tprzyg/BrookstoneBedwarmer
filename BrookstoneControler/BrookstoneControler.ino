@@ -1,6 +1,6 @@
 /*
  * Brookstone Bedwarmer replacement controller.
- * (C)2022 Tomasz Przygpda <tprzyg@yahoo.com>
+ * (C)2022 Tomasz Przygoda <tprzyg@yahoo.com>
  *
  * 4 input buttons (reused from the original controller board) for temp+, temp-, timer+ and timer-
  * 1 Power on/off button (also reused from the original board) with display OFF will set the ESP32 to deep sleep
