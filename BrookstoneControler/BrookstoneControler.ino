@@ -388,6 +388,7 @@ void setup() {
   setup_pin(TEMP_MINUS_PIN, temp_down_ISR);
   setup_pin(TIMER_PLUS_PIN, timer_up_ISR);
   setup_pin(TIMER_MINUS_PIN, timer_down_ISR);
+  pinMode(HEATER_RELAY_PIN, OUTPUT);
   display.println("ON");
   display.display();
   updateDisplay();
