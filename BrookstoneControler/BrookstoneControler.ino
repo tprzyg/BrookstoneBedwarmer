@@ -19,10 +19,8 @@
 
 
 #include <Wire.h>
-#include <WiFiManager.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans18pt7b.h>
@@ -364,10 +362,10 @@ void setup() {
     delay(10000);
     ESP.restart();
   }
-  delay(1000);
-  display.clearDisplay();
-  display.setRotation(3);
+  delay(2000);
   display.ssd1306_command(SSD1306_DISPLAYON);
+  display.clearDisplay();
+  display.setRotation(1);
   display.setTextColor(WHITE);
   display.setFont(&FreeSans9pt7b);
   display.setTextSize(1);
@@ -376,16 +374,6 @@ void setup() {
   Serial.println("ESP32 Controller for a Brookstone Heated Mattress Pad.");
   timerOn = true;
   heaterOn = false;
-  display.clearDisplay();
-  display.setCursor(0, 24);
-  display.println("Booting");
-  display.println("Heater:");
-  display.display();
-  pinMode(HEATER_RELAY_PIN, OUTPUT);
-  digitalWrite(HEATER_RELAY_PIN, LOW);
-  display.println("OFF");
-  display.display();
-  delay(1000);
   displayOn = true;
   refreshDisplay = true;
   enterSleepMode = false;
@@ -395,11 +383,6 @@ void setup() {
   timerRemaining = DEFAULT_TIMER;
   timerEndTime = timerStartTime + DEFAULT_TIMER * 60000;
   lastButtonPressTime = currentTime;
-  display.clearDisplay();
-  display.setCursor(0, 24);
-  display.println("Booting");
-  display.println("Buttons:");
-  display.display();
   setup_pin(POWER_ON_PIN, power_button_ISR);
   setup_pin(TEMP_PLUS_PIN, temp_up_ISR);
   setup_pin(TEMP_MINUS_PIN, temp_down_ISR);
@@ -407,26 +390,6 @@ void setup() {
   setup_pin(TIMER_MINUS_PIN, timer_down_ISR);
   display.println("ON");
   display.display();
-  delay(1000);
-  display.clearDisplay();
-  display.setCursor(0, 24);
-  display.println("Booting");
-  display.println("WiFi:");
-  display.display();
-  // Initialize WiFi Manager
-  WiFiManager wm;
-  wifiOn = wm.autoConnect();  // auto generated AP name from chipid
-  if (!wifiOn) {
-    Serial.println("Failed to connect");
-    display.println("OFF");
-    display.display();
-  } else {
-    //if you get here you have connected to the WiFi
-    Serial.println("connected...yeey :)");
-    display.println("ON");
-    display.display();
-  }
-  delay(5000);
   updateDisplay();
 }
 
