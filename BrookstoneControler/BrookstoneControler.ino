@@ -3,17 +3,18 @@
  * (C)2022 Tomasz Przygoda <tprzyg@yahoo.com>
  *
  * 4 input buttons (reused from the original controller board) for temp+, temp-, timer+ and timer-
- * 1 Power on/off button (also reused from the original board) with display OFF will set the ESP32 to deep sleep
+ * 1 Power on/off button (also reused from the original board) with display ON it will set the ESP32 into deep sleep
  * The original segmented LCD display was replaced with 0.96" OLED (SSD1306)
  * Temperature is adjusted from 10% to 100% with 10% increments
- * Timer can be adjusted from 10min to 12hrs (in 10min steps)
- * Logic was slightly changed to allow for 10min timer-step value (originally 30min step value)
+ * Timer can be adjusted from 1min to 12hrs (originally was from 30min to 8hrs)
+ * Logic was changed to allow for 1min timer-step value (originally 30min step value)
  * and also the display will show not the preset timer value, but rather the remaining hours:minutes
  * Display will dim after 15 seconds and go blank after 60 seconds of inactivity
  * When display is inactive, pressing any button (including power button) will reactivate the display
  * When display is active pressing adjustment buttons will make the desired adjustment
  * while pressing power button will turn off heat, reset timer and put the controller into deep sleep
- * When controller is in deep sleep mode, pressing power button will restart and re-initialize the controller, but all other buttons are ignored
+ * When controller is in deep sleep mode, pressing power button will restart and re-initialize the controller,
+ * but all other buttons are ignored
  * When timer runs out, the controller will turn off heat, reset timer and put the controller into deep sleep
  */
 
