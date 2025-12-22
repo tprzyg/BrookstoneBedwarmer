@@ -132,7 +132,12 @@ void IRAM_ATTR temp_up_ISR() {
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
     lastButtonPressed = TEMP_PLUS_PIN;
     lastButtonPressTime = currentPressTime;
-    temp_plus_action(1);
+    if (displayOn) {
+      temp_plus_action(1);
+    } else {
+      displayOn = true;
+      lastDisplayOn = currentPressTime;
+    }
   }
 }
 
@@ -141,7 +146,12 @@ void IRAM_ATTR temp_down_ISR() {
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
     lastButtonPressed = TEMP_MINUS_PIN;
     lastButtonPressTime = currentPressTime;
-    temp_minus_action(1);
+    if (displayOn) {
+      temp_minus_action(1);
+    } else {
+      displayOn = true;
+      lastDisplayOn = currentPressTime;
+    }
   }
 }
 
@@ -150,7 +160,12 @@ void IRAM_ATTR timer_up_ISR() {
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
     lastButtonPressed = TIMER_PLUS_PIN;
     lastButtonPressTime = currentPressTime;
-    timer_plus_action(1);
+    if (displayOn) {
+      timer_plus_action(1);
+    } else {
+      displayOn = true;
+      lastDisplayOn = currentPressTime;
+    }
   }
 }
 
@@ -159,7 +174,12 @@ void IRAM_ATTR timer_down_ISR() {
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
     lastButtonPressed = TIMER_MINUS_PIN;
     lastButtonPressTime = currentPressTime;
-    timer_minus_action(1);
+    if (displayOn) {
+      timer_minus_action(1);
+    } else {
+      displayOn = true;
+      lastDisplayOn = currentPressTime;
+    }
   }
 }
 
