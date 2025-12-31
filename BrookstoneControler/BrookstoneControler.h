@@ -1,9 +1,9 @@
 #define MIN_TEMP 1
-#define MAX_TEMP 10
+#define MAX_TEMP 99
 #define TEMP_STEP 1
-#define DEFAULT_TEMP 2
-#define MIN_DUTY_CYCLE 0.1
-#define MAX_DUTY_CYCLE 0.8
+#define DEFAULT_TEMP 25
+#define MIN_DUTY_CYCLE 0
+#define MAX_DUTY_CYCLE 1
 #define HEATER_TIME_CYCLE 1000
 
 #define TIMER_STEP 1
@@ -30,3 +30,5 @@
 #define DISPLAY_DIMMING 15000
 #define DISPLAY_TIMEOUT 60000
 #define DISPLAY_REFRESH_RATE 500
+
+#define DEBUG_LEVEL 0

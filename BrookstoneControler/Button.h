@@ -7,6 +7,8 @@
 #define BUTTON_LONG_PRESS       2
 #define BUTTON_VERY_LONG_PRESS  3
 
+#define BUTTON_DEBOUNCE_MILLIS  200
+
 class Button {
   
   private:
@@ -21,7 +23,7 @@ class Button {
     void update();
 
   public:
-    Button(uint8_t pin, void (*action)(), unsigned long delay = 200);
+    Button(uint8_t pin, void (*action)(), unsigned long delay = BUTTON_DEBOUNCE_MILLIS);
     void init();
     uint8_t getState();
     bool isPressed();

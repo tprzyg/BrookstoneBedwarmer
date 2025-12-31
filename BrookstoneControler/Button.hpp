@@ -1,6 +1,6 @@
 #include "Button.h"
 
-Button::Button(byte pin, void (*action)(), unsigned long delay) {
+Button::Button(byte pin, void (*action)(), unsigned long delay = BUTTON_DEBOUNCE_MILLIS) {
   this->pin = pin;
   lastReading = LOW;
   debounceDelay = delay;

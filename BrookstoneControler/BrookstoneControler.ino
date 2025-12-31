@@ -63,77 +63,34 @@ unsigned long lastHeatOffTime = 0;
 
 typedef void (*dummyFunction)(void);
 
-struct Button {
-  unsigned int PIN;
-  bool Pressed = false;
-  unsigned long lastPressTime = 0;
-  dummyFunction ISR_routine;
-  dummyFunction Action_routine;
-};
-
-void IRAM_ATTR temp_plus_action(unsigned int myFactor) {
+void updateHeatSetting(unsigned int myFactor) {
   currentPressTime = millis();
   refreshDisplay = true;
-  lastDisplayOn = currentPressTime;
-  if (displayOn) {
-    if (heatSetting <= MAX_TEMP - TEMP_STEP) {
-      heatSetting = heatSetting + TEMP_STEP;
-      lastButtonActionTime = currentPressTime;
-    }
-  } else {
-    displayOn = true;
+  unsigned int newHeatSetting = heatSetting + TEMP_STEP * myFactor;
+
+  if ((newHeatSetting <= MAX_TEMP) and (newHeatSetting >= MIN_TEMP)) {
+    heatSetting = newHeatSetting;
+    lastButtonActionTime = currentPressTime;
   }
 }
 
-void IRAM_ATTR temp_minus_action(unsigned int myFactor) {
+void updateTimerSetting(unsigned int myFactor) {
   currentPressTime = millis();
   refreshDisplay = true;
-  lastDisplayOn = currentPressTime;
-  if (displayOn) {
-    if (heatSetting >= MIN_TEMP + TEMP_STEP) {
-      heatSetting = heatSetting - TEMP_STEP;
-      lastButtonActionTime = currentPressTime;
-    }
-  } else {
-    displayOn = true;
-  }
-}
+  unsigned long newTimerEndTime = timerEndTime + (TIMER_STEP * myFactor) * 60000;
 
-void IRAM_ATTR timer_plus_action(unsigned int myFactor) {
-  currentPressTime = millis();
-  refreshDisplay = true;
-  lastDisplayOn = currentPressTime;
-  if (displayOn) {
-    if (timerEndTime - currentTime < (MAX_TIMER - TIMER_STEP * myFactor) * 60000) {
-      timerEndTime = timerEndTime + TIMER_STEP * myFactor * 60000;
-      lastButtonActionTime = currentPressTime;
-    }
-  } else {
-    displayOn = true;
-  }
-}
-
-void IRAM_ATTR timer_minus_action(unsigned int myFactor) {
-  currentPressTime = millis();
-  refreshDisplay = true;
-  lastDisplayOn = currentPressTime;
-  if (displayOn) {
-    if (timerEndTime - currentTime > (TIMER_STEP * myFactor + 1) * 60000) {
-      timerEndTime = timerEndTime - TIMER_STEP * myFactor * 60000;
-      lastButtonActionTime = currentPressTime;
-    }
-  } else {
-    displayOn = true;
+  if (((newTimerEndTime - currentTime )<= MAX_TIMER * 60000) and ((newTimerEndTime - currentTime) >= MIN_TIMER * 60000)) {
+    timerEndTime = newTimerEndTime;
+    lastButtonActionTime = currentPressTime;
   }
 }
 
 void IRAM_ATTR temp_up_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    lastButtonPressed = TEMP_PLUS_PIN;
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
-      temp_plus_action(1);
+      lastButtonPressed = TEMP_PLUS_PIN;
     } else {
       displayOn = true;
       lastDisplayOn = currentPressTime;
@@ -144,10 +101,9 @@ void IRAM_ATTR temp_up_ISR() {
 void IRAM_ATTR temp_down_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    lastButtonPressed = TEMP_MINUS_PIN;
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
-      temp_minus_action(1);
+      lastButtonPressed = TEMP_MINUS_PIN;
     } else {
       displayOn = true;
       lastDisplayOn = currentPressTime;
@@ -158,10 +114,9 @@ void IRAM_ATTR temp_down_ISR() {
 void IRAM_ATTR timer_up_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    lastButtonPressed = TIMER_PLUS_PIN;
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
-      timer_plus_action(1);
+      lastButtonPressed = TIMER_PLUS_PIN;
     } else {
       displayOn = true;
       lastDisplayOn = currentPressTime;
@@ -172,10 +127,9 @@ void IRAM_ATTR timer_up_ISR() {
 void IRAM_ATTR timer_down_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
-    lastButtonPressed = TIMER_MINUS_PIN;
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
-      timer_minus_action(1);
+      lastButtonPressed = TIMER_MINUS_PIN;
     } else {
       displayOn = true;
       lastDisplayOn = currentPressTime;
@@ -187,9 +141,9 @@ void IRAM_ATTR power_button_ISR() {
   currentPressTime = millis();
   if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
     refreshDisplay = true;
-    lastButtonPressed = POWER_ON_PIN;
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
+      lastButtonPressed = POWER_ON_PIN;
       enterSleepMode = true;
     } else {
       displayOn = true;
@@ -238,7 +192,7 @@ void updateDisplay() {
     int timerHours = timerRemaining / 60;
     int timerMinutes = timerRemaining - timerHours * 60;
     char heatStr[8];
-    sprintf(heatStr, "%3d%%", heatSetting * 10);
+    sprintf(heatStr, "%3d%%", heatSetting);
     char timeStr[8];
     sprintf(timeStr, "%2d:%02d", timerHours, timerMinutes);
     if (currentTime - lastDisplayOn > DISPLAY_DIMMING) {
@@ -270,16 +224,17 @@ void updateDisplay() {
       display.println(timeStr);
       display.display();
     }
-    // refreshDisplay = false;
-    // DEBUG
-    Serial.print("currentTime = ");
-    Serial.print(currentTime);
-    Serial.print(" LastDisplayOn = ");
-    Serial.print(lastDisplayOn);
-    Serial.print(" Heat = ");
-    Serial.print(heatStr);
-    Serial.print(" Timer = ");
-    Serial.println(timeStr);
+    refreshDisplay = false;
+    if (DEBUG_LEVEL > 0) {
+      Serial.print("currentTime = ");
+      Serial.print(currentTime);
+      Serial.print(" LastDisplayOn = ");
+      Serial.print(lastDisplayOn);
+      Serial.print(" Heat = ");
+      Serial.print(heatStr);
+      Serial.print(" Timer = ");
+      Serial.println(timeStr);
+    }
   }
 }
 
@@ -305,15 +260,17 @@ void checkTimerOff() {
 void runHeater() {
   currentTime = millis();
   if (timerOn) {
-    unsigned long dutyOnTime = round(HEATER_TIME_CYCLE * (heatSetting * 0.1 * (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE) + MIN_DUTY_CYCLE));
+    unsigned long dutyOnTime = round(HEATER_TIME_CYCLE * (heatSetting * 0.01 * (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE) + MIN_DUTY_CYCLE));
     unsigned long dutyOffTime = HEATER_TIME_CYCLE - dutyOnTime;
     if ((heatSetting >= MIN_TEMP) and (heatSetting <= MAX_TEMP)) {
       if (!heaterOn) {
         if (currentTime - lastHeatOffTime >= dutyOffTime) {
           // TURN THE HEAT ON
           digitalWrite(HEATER_RELAY_PIN, HIGH);
-          Serial.print("Heater ON @ ");
-          Serial.println(currentTime);
+          if (DEBUG_LEVEL > 0) {
+            Serial.print("Heater ON @ ");
+            Serial.println(currentTime);
+          }
           heaterOn = true;
           lastHeatOnTime = currentTime;
         }
@@ -321,8 +278,10 @@ void runHeater() {
         if (currentTime - lastHeatOnTime >= dutyOnTime) {
           // TURN THE HEAT OFF
           digitalWrite(HEATER_RELAY_PIN, LOW);
-          Serial.print("Heater OFF @ ");
-          Serial.println(currentTime);
+          if (DEBUG_LEVEL > 0) {
+            Serial.print("Heater OFF @ ");
+            Serial.println(currentTime);
+          }
           heaterOn = false;
           lastHeatOffTime = currentTime;
         }
@@ -358,13 +317,13 @@ void checkButtons() {
   if (buttonAction) {
     lastButtonActionTime = currentTime;
     if (lastButtonPressed == TEMP_PLUS_PIN) {
-      temp_plus_action(1);
+      updateHeatSetting(1);
     } else if (lastButtonPressed == TEMP_MINUS_PIN) {
-      temp_minus_action(1);
+      updateHeatSetting(-1);
     } else if (lastButtonPressed == TIMER_PLUS_PIN) {
-      timer_plus_action(1);
+      updateTimerSetting(1);
     } else if (lastButtonPressed == TIMER_MINUS_PIN) {
-      timer_minus_action(1);
+      updateTimerSetting(-1);
     }
   }
 }
