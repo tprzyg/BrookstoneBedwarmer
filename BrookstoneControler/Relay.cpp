@@ -32,9 +32,9 @@ uint8_t Relay::getStatus() {
 }
 
 bool Relay::isOn() {
-  return (getState() == HIGH);
+  return (getStatus() == HIGH);
 }
 
 bool Relay::isOff() {
-  return (getState() == LOW);
+  return (getStatus() == LOW);
 }

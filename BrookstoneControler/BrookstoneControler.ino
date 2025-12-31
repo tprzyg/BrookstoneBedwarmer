@@ -31,9 +31,11 @@
 #include <Fonts/FreeSansBold24pt7b.h>
 
 #include "BrookstoneControler.h"
+#include "Button.h"
 
 // Allocate the SSD1306 OLED Screen
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 
 bool wifiOn;
 bool timerOn;

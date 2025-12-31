@@ -1,6 +1,6 @@
 #include "Button.h"
 
-Button::Button(byte pin, void (*action)(), unsigned long delay = BUTTON_DEBOUNCE_MILLIS) {
+Button::Button(byte pin, void (*action)(), unsigned long delay) {
   this->pin = pin;
   lastReading = LOW;
   debounceDelay = delay;
@@ -13,8 +13,9 @@ void Button::init() {
   update();
 }
 
-void IRAM_ATTR update_ISR() {
+void IRAM_ATTR Button::update_ISR() {
   if (millis() - lastDebounceTime > debounceDelay) {
+    uint8_t newReading = digitalRead(pin);
     if (newReading != lastReading) {
       lastDebounceTime = millis();
       state = HIGH;
@@ -38,11 +39,11 @@ void Button::update() {
     else if (state == HIGH) {
       if (millis() - lastDebounceTime > 15 * debounceDelay) {
         pressType = BUTTON_VERY_LONG_PRESS;
-    } else if () {
-      if (millis() - lastDebounceTime > 5 * debounceDelay) {
+      } else if (millis() - lastDebounceTime > 5 * debounceDelay) {
         pressType = BUTTON_LONG_PRESS;
-    } else {
-      pressType = BUTTON_SHORT_PRESS;
+      } else {
+        pressType = BUTTON_SHORT_PRESS;
+      }
     }
   }
 }
