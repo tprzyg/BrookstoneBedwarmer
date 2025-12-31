@@ -18,7 +18,6 @@
  * When timer runs out, the controller will turn off heat, reset timer and put the controller into deep sleep
  */
 
-
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -87,7 +86,7 @@ void updateTimerSetting(unsigned int myFactor) {
 
 void IRAM_ATTR temp_up_ISR() {
   currentPressTime = millis();
-  if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
+  if (currentPressTime - lastButtonPressTime > MIN_BUTTON_PRESS_TIME) {
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
       lastButtonPressed = TEMP_PLUS_PIN;
@@ -100,7 +99,7 @@ void IRAM_ATTR temp_up_ISR() {
 
 void IRAM_ATTR temp_down_ISR() {
   currentPressTime = millis();
-  if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
+  if (currentPressTime - lastButtonPressTime > MIN_BUTTON_PRESS_TIME) {
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
       lastButtonPressed = TEMP_MINUS_PIN;
@@ -113,7 +112,7 @@ void IRAM_ATTR temp_down_ISR() {
 
 void IRAM_ATTR timer_up_ISR() {
   currentPressTime = millis();
-  if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
+  if (currentPressTime - lastButtonPressTime > MIN_BUTTON_PRESS_TIME) {
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
       lastButtonPressed = TIMER_PLUS_PIN;
@@ -126,7 +125,7 @@ void IRAM_ATTR timer_up_ISR() {
 
 void IRAM_ATTR timer_down_ISR() {
   currentPressTime = millis();
-  if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
+  if (currentPressTime - lastButtonPressTime > MIN_BUTTON_PRESS_TIME) {
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
       lastButtonPressed = TIMER_MINUS_PIN;
@@ -139,7 +138,7 @@ void IRAM_ATTR timer_down_ISR() {
 
 void IRAM_ATTR power_button_ISR() {
   currentPressTime = millis();
-  if (currentPressTime - lastButtonPressTime > DEBOUNCING_TIME) {
+  if (currentPressTime - lastButtonPressTime > MIN_BUTTON_PRESS_TIME) {
     refreshDisplay = true;
     lastButtonPressTime = currentPressTime;
     if (displayOn) {
@@ -226,13 +225,11 @@ void updateDisplay() {
     }
     refreshDisplay = false;
     if (DEBUG_LEVEL > 0) {
-      Serial.print("currentTime = ");
-      Serial.print(currentTime);
-      Serial.print(" LastDisplayOn = ");
-      Serial.print(lastDisplayOn);
-      Serial.print(" Heat = ");
+      Serial.print("LastDisplayOn = ");
+      Serial.print((currentTime-lastDisplayOn)/1000);
+      Serial.print("s ago, Heat = ");
       Serial.print(heatStr);
-      Serial.print(" Timer = ");
+      Serial.print(", Timer = ");
       Serial.println(timeStr);
     }
   }
@@ -268,8 +265,8 @@ void runHeater() {
           // TURN THE HEAT ON
           digitalWrite(HEATER_RELAY_PIN, HIGH);
           if (DEBUG_LEVEL > 0) {
-            Serial.print("Heater ON @ ");
-            Serial.println(currentTime);
+            Serial.print("Heater ON after ");
+            Serial.println(currentTime - lastHeatOffTime);
           }
           heaterOn = true;
           lastHeatOnTime = currentTime;
@@ -279,8 +276,8 @@ void runHeater() {
           // TURN THE HEAT OFF
           digitalWrite(HEATER_RELAY_PIN, LOW);
           if (DEBUG_LEVEL > 0) {
-            Serial.print("Heater OFF @ ");
-            Serial.println(currentTime);
+            Serial.print("Heater OFF after ");
+            Serial.println(currentTime - lastHeatOnTime);
           }
           heaterOn = false;
           lastHeatOffTime = currentTime;
@@ -301,29 +298,34 @@ void checkButtons() {
   bool buttonAction = false;
   unsigned int actionFactor = 1;
   if (digitalRead(lastButtonPressed) == LOW) {
-    if (currentTime - lastButtonPressTime > 6 * LONG_BUTTON_PRESS) {
+    if (currentTime - lastButtonPressTime > 10 * MIN_BUTTON_PRESS_TIME) {
       buttonAction = true;
-      actionFactor = 18;
-    } else if (currentTime - lastButtonPressTime > 3 * LONG_BUTTON_PRESS) {
+      actionFactor = 10;
+    } else if (currentTime - lastButtonPressTime > 5 * MIN_BUTTON_PRESS_TIME) {
       buttonAction = true;
-      actionFactor = 6;
-    } else if (currentTime - lastButtonActionTime > LONG_BUTTON_PRESS) {
+      actionFactor = 5;
+    } else if (currentTime - lastButtonActionTime > MIN_BUTTON_PRESS_TIME) {
       buttonAction = true;
     }
   }
-  if (currentTime - lastButtonActionTime < round(MIN_DELAY_TIME / actionFactor)) {
+  if (currentTime - lastButtonActionTime < round(2*MIN_BUTTON_PRESS_TIME / actionFactor)) {
     buttonAction = false;
   }
   if (buttonAction) {
     lastButtonActionTime = currentTime;
-    if (lastButtonPressed == TEMP_PLUS_PIN) {
-      updateHeatSetting(1);
-    } else if (lastButtonPressed == TEMP_MINUS_PIN) {
-      updateHeatSetting(-1);
-    } else if (lastButtonPressed == TIMER_PLUS_PIN) {
-      updateTimerSetting(1);
-    } else if (lastButtonPressed == TIMER_MINUS_PIN) {
-      updateTimerSetting(-1);
+    switch (lastButtonPressed) {
+      case TEMP_PLUS_PIN:
+       updateHeatSetting(1);
+       break;
+      case TEMP_MINUS_PIN:
+       updateHeatSetting(-1);
+       break;
+      case TIMER_PLUS_PIN:
+       updateTimerSetting(1);
+       break;
+      case TIMER_MINUS_PIN:
+       updateTimerSetting(-1);
+       break;
     }
   }
 }
